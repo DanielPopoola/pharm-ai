@@ -15,16 +15,30 @@ class Settings(BaseSettings):
     OPENFDA_BASE_URL: str = "https://api.fda.gov/drug/label.json"
 
     SEED_THERAPEUTIC_CLASSES: list[str] = [
-        "Cephalosporin Antibacterial [EPC]",  # antibiotic (count: 78)
-        "Macrolide Antimicrobial [EPC]",  # antibiotic (count: 98)
-        "Fluoroquinolone Antibacterial [EPC]",  # antibiotic (count: 82)
-        "Angiotensin Converting Enzyme Inhibitor [EPC]",  # antihypertensive (count: 65)
-        "Angiotensin 2 Receptor Blocker [EPC]",  # antihypertensive (count: 282)
-        "beta-Adrenergic Blocker [EPC]",  # antihypertensive (count: 272)
-        "Nonsteroidal Anti-inflammatory Drug [EPC]",  # analgesic (count: 2543)
-        "Sulfonylurea [EPC]",  # antidiabetic (count: 247)
-        "Insulin Analog [EPC]",  # antidiabetic (count: 65)
-        "Anti-coagulant [EPC]",  # anticoagulant (count: 136)
+        # Antibiotics
+        "Penicillin-class Antibacterial [EPC]",
+        "Cephalosporin Antibacterial [EPC]",
+        "Macrolide Antimicrobial [EPC]",
+        "Fluoroquinolone Antibacterial [EPC]",
+        "Tetracycline-class Drug [EPC]",
+        # Antihypertensives
+        "Angiotensin Converting Enzyme Inhibitor [EPC]",
+        "Angiotensin 2 Receptor Blocker [EPC]",
+        "Dihydropyridine Calcium Channel Blocker [EPC]",
+        "beta-Adrenergic Blocker [EPC]",
+        "Thiazide Diuretic [EPC]",
+        # Analgesics
+        "Nonsteroidal Anti-inflammatory Drug [EPC]",
+        "Opioid Agonist [EPC]",
+        # Antidiabetics
+        "Sulfonylurea [EPC]",
+        "Insulin Analog [EPC]",
+        # Anticoagulants
+        "Anti-coagulant [EPC]",
+        "Factor Xa Inhibitor [EPC]",
+        "Direct Thrombin Inhibitor [EPC]",
+        "Platelet Aggregation Inhibitor [EPC]",
+        # Statins
         "HMG-CoA Reductase Inhibitor [EPC]",
     ]
 
