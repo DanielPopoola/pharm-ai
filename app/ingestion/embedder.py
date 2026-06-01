@@ -12,7 +12,7 @@ logger = logging.getLogger("pharmai")
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-BATCH_SIZE = 100
+BATCH_SIZE = settings.EMBEDDING_BATCH_SIZE
 
 
 async def embed_chunks(texts: list[str]) -> list[list[float]]:

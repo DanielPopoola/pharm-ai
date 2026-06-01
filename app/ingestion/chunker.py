@@ -4,6 +4,7 @@ from app.ingestion.openfda_client import DrugLabel
 
 CHUNK_SIZE = 400  # words — approximates 512 tokens
 OVERLAP = 38
+MIN_SECTIONS = 3
 
 SECTION_MAP = {
     "indications_and_usage": "indications_and_usage",
@@ -62,3 +63,16 @@ def parse_label_into_chunks(label: DrugLabel) -> list[DrugChunk]:
             )
 
     return chunks
+
+
+def is_clinically_useful(label: DrugLabel) -> bool:
+    sections = [
+        label.indications_and_usage,
+        label.dosage_and_administration,
+        label.contraindications,
+        label.warnings_and_precautions,
+        label.drug_interactions,
+        label.description,
+    ]
+    populated = sum(1 for s in sections if s and s.strip())
+    return populated >= MIN_SECTIONS

@@ -1,8 +1,13 @@
+import logging
 import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import AsyncSessionLocal
+
+logger = logging.getLogger("pharmai")
 
 
 async def create_job(session: AsyncSession, drug_name: str, triggered_by: str) -> str:
@@ -52,16 +57,11 @@ async def fail_job(session: AsyncSession, job_id: str, error: str):
     await session.commit()
 
 
-async def upsert_drugs_and_chunks(session, chunks, embeddings):
-    # --- upsert drugs ---
-    seen = {}
-
-    for label, _ in chunks:
-        seen[label.drug_name] = label
-
-    for label in seen.values():
-        await session.execute(
-            text("""
+async def upsert_drugs_and_chunks(drug: dict) -> int:
+    async with AsyncSessionLocal() as session:
+        try:
+            await session.execute(
+                text("""
                 INSERT INTO drugs
                 (id, drug_name, brand_names, therapeutic_class, source_url)
                 VALUES (:id, :drug_name, :brand_names, :therapeutic_class, :source_url)
@@ -70,48 +70,57 @@ async def upsert_drugs_and_chunks(session, chunks, embeddings):
                     therapeutic_class = EXCLUDED.therapeutic_class,
                     ingested_at = now()
             """),
-            {
-                "id": str(uuid.uuid4()),
-                "drug_name": label.drug_name,
-                "brand_names": label.brand_names,
-                "therapeutic_class": label.therapeutic_class,
-                "source_url": label.source_url,
-            },
-        )
+                {
+                    "id": str(uuid.uuid4()),
+                    "drug_name": drug["drug_name"],
+                    "brand_names": drug["brand_names"],
+                    "therapeutic_class": drug["therapeutic_class"],
+                    "source_url": drug["source_url"],
+                },
+            )
 
-    # --- delete old chunks ---
-    for drug_name in seen:
-        await session.execute(
-            text("DELETE FROM drug_chunks WHERE drug_name = :drug_name"),
-            {"drug_name": drug_name},
-        )
-
-    # --- insert new chunks ---
-    for (label, chunk), embedding in zip(chunks, embeddings):
-        await session.execute(
-            text("""
-                INSERT INTO drug_chunks (
-                    id,
-                    drug_name,
-                    section_type,
-                    chunk_text,
-                    embedding
-                )
-                VALUES (
-                    :id,
-                    :drug_name,
-                    :section_type,
-                    :chunk_text,
-                    :embedding
-                )
+            await session.execute(
+                text("""
+                DELETE FROM drug_chunks WHERE drug_name = :drug_name
             """),
-            {
-                "id": str(uuid.uuid4()),
-                "drug_name": chunk.drug_name,
-                "section_type": chunk.section_type,
-                "chunk_text": chunk.chunk_text,
-                "embedding": str(embedding),
-            },
-        )
+                {"drug_name": drug["drug_name"]},
+            )
 
-    await session.commit()
+            rows = 0
+            for chunk in drug["chunks"]:
+                await session.execute(
+                    text("""
+                    INSERT INTO drug_chunks
+                        (id, drug_name, section_type, chunk_text, embedding)
+                    VALUES
+                        (:id, :drug_name, :section_type, :chunk_text, :embedding)
+                """),
+                    {
+                        "id": str(uuid.uuid4()),
+                        "drug_name": drug["drug_name"],
+                        "section_type": chunk["section_type"],
+                        "chunk_text": chunk["chunk_text"],
+                        "embedding": str(chunk["embedding"]),
+                    },
+                )
+                rows += 1
+
+            await session.commit()
+            return rows
+
+        except Exception:
+            await session.rollback()
+            raise
+
+
+def verify_upsert(rows_affected: int, drug: dict) -> bool:
+    expected = len(drug["chunks"])
+    if rows_affected != expected:
+        logger.error(
+            "Row count mismatch for %s: expected %d, got %d",
+            drug["drug_name"],
+            expected,
+            rows_affected,
+        )
+        return False
+    return True

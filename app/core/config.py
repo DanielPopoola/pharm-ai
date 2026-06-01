@@ -30,6 +30,11 @@ class Settings(BaseSettings):
 
     EMBEDDING_DIMENSION: int = 768
     TOP_K_RETRIEVAL: int = 5
+    EMBEDDING_BATCH_SIZE: int = 5
+    EMBEDDING_RPM_LIMIT: int = 11
+    EMBEDDING_REQUESTS_PER_DAY: int = 1000
+
+    CHECKPOINT_DIR: str = "data/checkpoints"
 
     model_config = SettingsConfigDict(
         env_file=".env",
