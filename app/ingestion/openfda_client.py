@@ -17,6 +17,7 @@ class DrugLabel(BaseModel):
     drug_name: str
     brand_names: list[str]
     therapeutic_class: str
+    dosage_form: str = "unknown"
     source_url: str
     indications_and_usage: str | None = None
     dosage_and_administration: str | None = None
@@ -119,6 +120,7 @@ def _build_label(
         source_url=(
             f"{settings.OPENFDA_BASE_URL}?search=openfda.generic_name:{generic_name}"
         ),
+        dosage_form=openfda.get("dosage_form", ["unknown"])[0].lower(),
         indications_and_usage=_extract_field(item, "indications_and_usage"),
         dosage_and_administration=_extract_field(item, "dosage_and_administration"),
         contraindications=_extract_field(item, "contraindications"),
@@ -162,6 +164,17 @@ async def fetch_label_for_drug(
     return []
 
 
+def _deduplicate(labels: list[DrugLabel]) -> list[DrugLabel]:
+    seen: set[tuple[str, str]] = set()
+    unique = []
+    for label in labels:
+        key = (label.drug_name, label.dosage_form)
+        if key not in seen:
+            seen.add(key)
+            unique.append(label)
+    return unique
+
+
 async def fetch_labels_for_class(
     therapeutic_class: str,
     client: httpx.AsyncClient,
@@ -198,4 +211,10 @@ async def fetch_labels_for_class(
             break
 
     logger.info("Fetched %d labels for class: %s", len(labels), therapeutic_class)
+    labels = _deduplicate(labels)
+    logger.info(
+        "After deduplication: %d unique labels for class: %s",
+        len(labels),
+        therapeutic_class,
+    )
     return labels

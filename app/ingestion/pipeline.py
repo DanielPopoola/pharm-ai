@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 import httpx
@@ -32,20 +31,22 @@ async def stage_fetch() -> None:
             checkpoint.write_labels(therapeutic_class, labels)
 
 
-async def _embed_label(label):
-    if not is_clinically_useful(label):
-        logger.info("Skipping low-quality label: %s", label.drug_name)
-        return []
+def _extract_chunks(labels):
+    chunks_with_labels = []
 
-    chunks = parse_label_into_chunks(label)
-    if not chunks:
-        return []
+    for label in labels:
+        if not is_clinically_useful(label):
+            logger.info(
+                "Skipping low-quality label: %s",
+                label.drug_name,
+            )
+            continue
 
-    texts = [c.chunk_text for c in chunks]
+        chunks = parse_label_into_chunks(label)
 
-    embeddings = await embed_chunks(texts)
+        chunks_with_labels.extend((label, chunk) for chunk in chunks)
 
-    return [(label, chunk, embedding) for chunk, embedding in zip(chunks, embeddings)]
+    return chunks_with_labels
 
 
 async def stage_embed() -> None:
@@ -66,26 +67,43 @@ async def stage_embed() -> None:
 
         labels = checkpoint.read_labels(therapeutic_class)
 
-        all_embeddings = []
+        chunks_with_labels = _extract_chunks(labels)
 
-        for label in labels:
-            try:
-                result = await _embed_label(label)
-                all_embeddings.extend(result)
+        if not chunks_with_labels:
+            logger.info(
+                "No clinically useful chunks found for: %s",
+                therapeutic_class,
+            )
+            continue
 
-                await asyncio.sleep(60 / settings.EMBEDDING_RPM_LIMIT)
+        try:
+            texts = [chunk.chunk_text for _, chunk in chunks_with_labels]
 
-            except Exception:
-                logger.exception(
-                    "Embedding failed for drug: %s",
-                    label.drug_name,
+            embeddings = await embed_chunks(texts)
+
+            chunks_with_embeddings = [
+                (label, chunk, embedding)
+                for (label, chunk), embedding in zip(
+                    chunks_with_labels,
+                    embeddings,
                 )
-                continue
+            ]
 
-        if all_embeddings:
             checkpoint.write_embeddings(
                 therapeutic_class,
-                all_embeddings,
+                chunks_with_embeddings,
+            )
+
+            logger.info(
+                "Embedded %s chunks for %s",
+                len(chunks_with_embeddings),
+                therapeutic_class,
+            )
+
+        except Exception:
+            logger.exception(
+                "Embedding failed for therapeutic class: %s",
+                therapeutic_class,
             )
 
 
@@ -98,6 +116,7 @@ async def stage_upsert() -> None:
                 "No embeddings checkpoint for: %s, skipping upsert",
                 therapeutic_class,
             )
+            success = False
             continue
 
         drugs = checkpoint.read_embeddings(therapeutic_class)

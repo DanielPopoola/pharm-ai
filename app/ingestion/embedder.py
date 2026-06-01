@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+import httpx
 from google import genai
 from google.genai import types
 
@@ -39,7 +40,11 @@ async def _embed(texts: list[str], task_type: str) -> list[list[float]]:
 @retry_with_backoff(
     max_retries=3,
     initial_delay=1,
-    retry_exceptions=(RetryableEmbeddingError,),
+    retry_exceptions=(
+        RetryableEmbeddingError,
+        httpx.RemoteProtocolError,
+        httpx.ConnectError,
+    ),
 )
 async def _embed_batch(batch: list[str], task_type: str):
     try:
@@ -67,7 +72,10 @@ def _embed_batch_sync(batch: list[str], task_type: str):
     response = client.models.embed_content(
         model=settings.GEMINI_EMBEDDING_MODEL,
         contents=batch,
-        config=types.EmbedContentConfig(task_type=task_type),
+        config=types.EmbedContentConfig(
+            task_type=task_type,
+            output_dimensionality=settings.EMBEDDING_DIMENSION,
+        ),
     )
     if response.embeddings:
         return [e.values for e in response.embeddings]

@@ -26,6 +26,7 @@ def _checkpoint_root() -> Path:
         path = PROJECT_ROOT / path
     return path
 
+
 def _ensure_checkpoint_dir(name: str) -> Path:
     path = _checkpoint_root() / name
     try:
@@ -37,6 +38,7 @@ def _ensure_checkpoint_dir(name: str) -> Path:
             "existing checkpoint directory."
         ) from exc
     return path
+
 
 def _labels_dir() -> Path:
     return _ensure_checkpoint_dir("labels")
