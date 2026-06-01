@@ -9,18 +9,23 @@ class Settings(BaseSettings):
     REDIS_URL: str
 
     GEMINI_API_KEY: str
-    GEMINI_EMBEDDING_MODEL: str = "text-embedding-004"
+    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
     GEMINI_LLM_MODEL: str = "gemini-2.5-flash-lite"
 
     OPENFDA_BASE_URL: str = "https://api.fda.gov/drug/label.json"
 
     SEED_THERAPEUTIC_CLASSES: list[str] = [
-        "antibiotic",
-        "antihypertensive",
-        "analgesic",
-        "antidiabetic",
-        "anticoagulant",
-        "statin",
+        "Cephalosporin Antibacterial [EPC]",  # antibiotic (count: 78)
+        "Macrolide Antimicrobial [EPC]",  # antibiotic (count: 98)
+        "Fluoroquinolone Antibacterial [EPC]",  # antibiotic (count: 82)
+        "Angiotensin Converting Enzyme Inhibitor [EPC]",  # antihypertensive (count: 65)
+        "Angiotensin 2 Receptor Blocker [EPC]",  # antihypertensive (count: 282)
+        "beta-Adrenergic Blocker [EPC]",  # antihypertensive (count: 272)
+        "Nonsteroidal Anti-inflammatory Drug [EPC]",  # analgesic (count: 2543)
+        "Sulfonylurea [EPC]",  # antidiabetic (count: 247)
+        "Insulin Analog [EPC]",  # antidiabetic (count: 65)
+        "Anti-coagulant [EPC]",  # anticoagulant (count: 136)
+        "HMG-CoA Reductase Inhibitor [EPC]",
     ]
 
     EMBEDDING_DIMENSION: int = 768
@@ -36,7 +41,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings  # type: ignore[call-arg]
+    return Settings()  # type: ignore[call-arg]
 
 
 settings = get_settings()
