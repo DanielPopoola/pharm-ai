@@ -10,6 +10,8 @@ from app.ingestion.openfda_client import DrugLabel
 
 logger = logging.getLogger("pharmai")
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 
 def _class_to_filename(therapeutic_class: str) -> str:
     name = therapeutic_class.lower()
@@ -18,16 +20,30 @@ def _class_to_filename(therapeutic_class: str) -> str:
     return f"{name}.json"
 
 
-def _labels_dir() -> Path:
-    path = Path(settings.CHECKPOINT_DIR) / "labels"
-    path.mkdir(parents=True, exist_ok=True)
+def _checkpoint_root() -> Path:
+    path = Path(settings.CHECKPOINT_DIR).expanduser()
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
     return path
+
+def _ensure_checkpoint_dir(name: str) -> Path:
+    path = _checkpoint_root() / name
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except PermissionError as exc:
+        raise PermissionError(
+            f"Unable to create checkpoint directory '{path}'. "
+            "Set CHECKPOINT_DIR to a writable path or fix ownership of the "
+            "existing checkpoint directory."
+        ) from exc
+    return path
+
+def _labels_dir() -> Path:
+    return _ensure_checkpoint_dir("labels")
 
 
 def _embeddings_dir() -> Path:
-    path = Path(settings.CHECKPOINT_DIR) / "embeddings"
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    return _ensure_checkpoint_dir("embeddings")
 
 
 def labels_exist(therapeutic_class: str) -> bool:
@@ -41,13 +57,13 @@ def write_labels(therapeutic_class: str, labels: list[DrugLabel]) -> None:
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "labels": [label.model_dump() for label in labels],
     }
-    path.write_text(json.dumps(payload, indent=2))
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     logger.info("Wrote %d labels checkpoint for: %s", len(labels), therapeutic_class)
 
 
 def read_labels(therapeutic_class: str) -> list[DrugLabel]:
     path = _labels_dir() / _class_to_filename(therapeutic_class)
-    payload = json.loads(path.read_text())
+    payload = json.loads(path.read_text(encoding="utf-8"))
     return [DrugLabel(**label) for label in payload["labels"]]
 
 
@@ -99,6 +115,6 @@ def read_embeddings(therapeutic_class: str) -> list[dict]:
 
 
 def wipe_checkpoints() -> None:
-    for path in Path(settings.CHECKPOINT_DIR).rglob("*.json"):
+    for path in _checkpoint_root().rglob("*.json"):
         path.unlink()
     logger.info("Wiped all checkpoint files")
