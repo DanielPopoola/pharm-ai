@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn
     REDIS_URL: str
 
+    LLM_API_KEY: str
     GEMINI_API_KEY: str
     GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
     GEMINI_LLM_MODEL: str = "gemini-2.5-flash-lite"

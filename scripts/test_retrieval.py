@@ -1,5 +1,7 @@
 import asyncio
-from app.retrieval.retrieval import semantic_search, lexical_search, hybrid_search, is_drug_cached
+
+from app.retrieval.retrieval import hybrid_search, is_drug_cached
+
 
 async def main():
     print("=== semantic search ===")
@@ -10,7 +12,9 @@ async def main():
         print()
 
     print("=== cache check ===")
-    print(await is_drug_cached("ciprofloxacin"))   # should be True
-    print(await is_drug_cached("ibuprofen"))        # should be False  
-    print(await is_drug_cached("ciprofloxaci"))     # typo — fuzzy should catch it
+    print(await is_drug_cached("ciprofloxacin"))  # should be True
+    print(await is_drug_cached("ibuprofen"))  # should be False
+    print(await is_drug_cached("ciprofloxaci"))  # typo — fuzzy should catch it
+
+
 asyncio.run(main())
