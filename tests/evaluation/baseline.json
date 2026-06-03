@@ -1,0 +1,6 @@
+{
+  "date": "2026-06-03",
+  "avg_precision": 0.200,
+  "avg_recall": 0.417,
+  "notes": "Class-level queries underperform due to vocabulary mismatch between query language and FDA label text. Drug-name-specific queries perform well. Class-level retrieval handled separately via EPC lookup in Milestone 4."
+}
