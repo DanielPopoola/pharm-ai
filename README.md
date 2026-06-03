@@ -29,7 +29,7 @@ flowchart TD
 |---|---|
 | API | FastAPI |
 | Agent | PydanticAI |
-| LLM + Embeddings | Gemini 1.5 Flash + text-embedding-004 |
+| LLM + Embeddings | Gemini 2.5 Flash Lite + gemini-embedding-001 |
 | Vector Store | Postgres + pgvector |
 | Task Queue | Celery + Redis |
 | Data Source | OpenFDA Drug Label API |
