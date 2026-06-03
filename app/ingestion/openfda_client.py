@@ -117,9 +117,7 @@ def _build_label(
         drug_name=generic_name.lower(),
         brand_names=[name.lower() for name in openfda.get("brand_name", [])],
         therapeutic_class=therapeutic_class,
-        source_url=(
-            f"{settings.OPENFDA_BASE_URL}?search=openfda.generic_name:{generic_name}"
-        ),
+        source_url=(f"{settings.OPENFDA_BASE_URL}?search=openfda.generic_name:{generic_name}"),
         dosage_form=openfda.get("dosage_form", ["unknown"])[0].lower(),
         indications_and_usage=_extract_field(item, "indications_and_usage"),
         dosage_and_administration=_extract_field(item, "dosage_and_administration"),

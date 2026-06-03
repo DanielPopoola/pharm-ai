@@ -1,0 +1,122 @@
+[
+  {
+    "query": "fluoroquinolone antibiotic urinary tract infection treatment",
+    "expected_drugs": ["ciprofloxacin", "levofloxacin"],
+    "expected_sections": ["indications_and_usage"],
+    "top_k": 5
+  },
+  {
+    "query": "ciprofloxacin dosage administration adults",
+    "expected_drugs": ["ciprofloxacin"],
+    "expected_sections": ["dosage_and_administration"],
+    "top_k": 5
+  },
+  {
+    "query": "cephalosporin antibiotic skin infection treatment",
+    "expected_drugs": ["cefdinir", "cefprozil"],
+    "expected_sections": ["indications_and_usage"],
+    "top_k": 5
+  },
+  {
+    "query": "cefdinir contraindications hypersensitivity",
+    "expected_drugs": ["cefdinir"],
+    "expected_sections": ["contraindications"],
+    "top_k": 5
+  },
+  {
+    "query": "macrolide antibiotic respiratory tract infection",
+    "expected_drugs": ["clarithromycin", "erythromycin"],
+    "expected_sections": ["indications_and_usage"],
+    "top_k": 5
+  },
+  {
+    "query": "clarithromycin drug interactions metabolism",
+    "expected_drugs": ["clarithromycin"],
+    "expected_sections": ["drug_interactions"],
+    "top_k": 5
+  },
+  {
+    "query": "tetracycline antibiotic mechanism of action description",
+    "expected_drugs": ["doxycycline"],
+    "expected_sections": ["description"],
+    "top_k": 5
+  },
+  {
+    "query": "doxycycline dosage bacterial infection adults",
+    "expected_drugs": ["doxycycline"],
+    "expected_sections": ["dosage_and_administration"],
+    "top_k": 5
+  },
+  {
+    "query": "beta blocker hypertension heart failure treatment",
+    "expected_drugs": ["atenolol", "carvedilol"],
+    "expected_sections": ["indications_and_usage"],
+    "top_k": 5
+  },
+  {
+    "query": "atenolol contraindications cardiac bradycardia",
+    "expected_drugs": ["atenolol"],
+    "expected_sections": ["contraindications"],
+    "top_k": 5
+  },
+  {
+    "query": "calcium channel blocker hypertension angina treatment",
+    "expected_drugs": ["amlodipine", "nifedipine"],
+    "expected_sections": ["indications_and_usage"],
+    "top_k": 5
+  },
+  {
+    "query": "amlodipine drug interactions",
+    "expected_drugs": ["amlodipine"],
+    "expected_sections": ["drug_interactions"],
+    "top_k": 5
+  },
+  {
+    "query": "opioid severe pain management treatment",
+    "expected_drugs": ["morphine", "fentanyl", "oxycodone"],
+    "expected_sections": ["indications_and_usage"],
+    "top_k": 5
+  },
+  {
+    "query": "morphine contraindications respiratory depression",
+    "expected_drugs": ["morphine"],
+    "expected_sections": ["contraindications"],
+    "top_k": 5
+  },
+  {
+    "query": "NSAID anti-inflammatory arthritis pain treatment",
+    "expected_drugs": ["naproxen", "celecoxib", "meloxicam"],
+    "expected_sections": ["indications_and_usage"],
+    "top_k": 5
+  },
+  {
+    "query": "naproxen drug interactions bleeding risk",
+    "expected_drugs": ["naproxen"],
+    "expected_sections": ["drug_interactions"],
+    "top_k": 5
+  },
+  {
+    "query": "ACE inhibitor hypertension heart failure treatment",
+    "expected_drugs": ["ramipril", "captopril", "trandolapril"],
+    "expected_sections": ["indications_and_usage"],
+    "top_k": 5
+  },
+  {
+    "query": "captopril contraindications renal impairment",
+    "expected_drugs": ["captopril"],
+    "expected_sections": ["contraindications"],
+    "top_k": 5
+  },
+  {
+    "query": "antibiotic alternative penicillin allergy bacterial infection",
+    "expected_drugs": ["ciprofloxacin", "clarithromycin", "doxycycline"],
+    "expected_sections": ["indications_and_usage"],
+    "top_k": 5
+  },
+  {
+    "query": "NSAID drug interactions anticoagulant bleeding",
+    "expected_drugs": ["naproxen", "celecoxib"],
+    "expected_sections": ["drug_interactions"],
+    "top_k": 5
+  }
+]

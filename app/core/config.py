@@ -44,6 +44,7 @@ class Settings(BaseSettings):
 
     EMBEDDING_DIMENSION: int = 768
     TOP_K_RETRIEVAL: int = 5
+    FUZZY_MATCH_THRESHOLD: float = 0.5
     EMBEDDING_BATCH_SIZE: int = 5
     EMBEDDING_RPM_LIMIT: int = 11
     EMBEDDING_REQUESTS_PER_DAY: int = 1000
