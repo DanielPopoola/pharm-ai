@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 
 from sqlalchemy import text
@@ -99,18 +100,18 @@ async def hybrid_search(
     top_k: int = settings.TOP_K_RETRIEVAL,
     section_types: list[str] | None = None,
     exclude_drug: str | None = None,
+    lexical_only: bool = False,
 ) -> list[RetrievedChunk]:
-    semantic_results = await semantic_search(
-        query=query,
-        top_k=top_k,
-        section_types=section_types,
-        exclude_drug=exclude_drug,
-    )
-    lexical_results = await lexical_search(
-        query=query,
-        top_k=top_k,
-        section_types=section_types,
-        exclude_drug=exclude_drug,
+    if lexical_only:
+        return await lexical_search(
+            query=query, top_k=top_k, section_types=section_types, exclude_drug=exclude_drug
+        )
+
+    semantic_results, lexical_results = await asyncio.gather(
+        semantic_search(
+            query=query, top_k=top_k, section_types=section_types, exclude_drug=exclude_drug
+        ),
+        lexical_search(query=query, top_k=top_k, section_types=section_types, exclude_drug=exclude_drug),
     )
 
     scores: dict[tuple[str, str, str], float] = {}
