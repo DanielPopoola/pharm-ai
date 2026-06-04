@@ -89,6 +89,7 @@ async def lookup_drug(ctx: RunContext[PharmAIDeps]) -> DrugProfile | str:
             hybrid_search,
             query=f"{drug_name} indications dosage warnings",
             section_types=PROFILE_SECTION_TYPES,
+            lexical_only=True,
         )
 
         summary = await _summarise_chunks(drug_name, [c.chunk_text for c in chunks])
@@ -131,6 +132,7 @@ async def find_similar_drugs(ctx: RunContext[PharmAIDeps]) -> list[AlternativeDr
                 query=f"{drug_name} therapeutic alternatives indications",
                 section_types=["indications_and_usage"],
                 exclude_drug=drug_name,
+                lexical_only=True,
             )
 
             seen = set()
@@ -153,6 +155,7 @@ async def find_similar_drugs(ctx: RunContext[PharmAIDeps]) -> list[AlternativeDr
                     query=f"{name} indications",
                     section_types=["indications_and_usage"],
                     top_k=2,
+                    lexical_only=True,
                 )
                 for name in candidate_names
             ]
@@ -209,6 +212,7 @@ async def check_contraindications(
                     query=f"{alt.drug_name} contraindications warnings interactions {context_query}",
                     section_types=CONTRAINDICATION_SECTION_TYPES,
                     top_k=3,
+                    lexical_only=True,
                 )
                 for alt in alternatives
             ]
