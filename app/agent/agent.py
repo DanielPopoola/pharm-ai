@@ -1,6 +1,6 @@
 from pydantic_ai import Agent
-from pydantic_ai.models.google import GoogleModel
-from pydantic_ai.providers.google import GoogleProvider
+from pydantic_ai.models.groq import GroqModel, GroqModelSettings
+from pydantic_ai.providers.groq import GroqProvider
 
 from app.agent.models import DrugResponse, PharmAIDeps
 from app.agent.tools import check_contraindications, find_similar_drugs, lookup_drug
@@ -24,9 +24,9 @@ Ground every clinical statement in retrieved FDA label text. Do not invent indic
 dosages, warnings, or substitution advice not supported by retrieved text.
 
 Populate contraindication_flags as a list of ContraindicationFlag objects.
-Each flag has drug_name (the alternative drug name) and condition 
+Each flag has drug_name (the alternative drug name) and condition
 (a short phrase describing the contraindication, max 5 words).
-Only create a flag when the retrieved text explicitly supports the conflict 
+Only create a flag when the retrieved text explicitly supports the conflict
 with the patient's allergies or conditions.
 
 Reason over the contraindication excerpts from check_contraindications against the
@@ -34,7 +34,7 @@ patient's allergies and conditions to populate contraindication_flags and altern
 cautions. Only flag conflicts when the retrieved label text supports it. If the retrieved
 text is insufficient, note it in clinical_caveats instead of guessing.
 
-Do not add a clinical_caveat claiming no contraindications were found 
+Do not add a clinical_caveat claiming no contraindications were found
 if contraindication_flags already contains flags for that drug.
 clinical_caveats and contraindication_flags must never contradict each other.
 
@@ -42,17 +42,16 @@ Do not add generic medical disclaimers to clinical_caveats. Only populate clinic
 with specific missing-data notes or pharmacist review reminders grounded in retrieved text.
 """
 
-model = GoogleModel(
-    settings.GEMINI_LLM_MODEL,
-    provider=GoogleProvider(api_key=settings.GEMINI_API_KEY),
+model = GroqModel(
+    "qwen/qwen3-32b",
+    provider=GroqProvider(api_key=settings.LLM_API_KEY),
 )
 
 agent: Agent[PharmAIDeps, DrugResponse] = Agent(
     model=model,
+    deps_type=PharmAIDeps,
     output_type=DrugResponse,
     system_prompt=SYSTEM_PROMPT,
+    model_settings=GroqModelSettings(groq_reasoning_format="hidden"),
+    tools=[lookup_drug, find_similar_drugs, check_contraindications],
 )
-
-agent.tool(lookup_drug)
-agent.tool(find_similar_drugs)
-agent.tool(check_contraindications)

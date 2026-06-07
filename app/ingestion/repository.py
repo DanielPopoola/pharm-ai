@@ -48,13 +48,43 @@ async def fail_job(session: AsyncSession, job_id: str, error: str):
         text("""
             UPDATE ingestion_jobs
             SET status = 'failed',
-                completed_at = :now
+                completed_at = :now,
+                error_message = :error
             WHERE id = :id
         """),
-        {"id": job_id, "now": datetime.now(timezone.utc)},
+        {"id": job_id, "now": datetime.now(timezone.utc), "error": error},
     )
-
     await session.commit()
+
+
+async def get_active_job(session: AsyncSession, drug_name: str) -> dict | None:
+    result = await session.execute(
+        text("""
+            SELECT id, status FROM ingestion_jobs
+            WHERE drug_name = :drug_name
+            AND status IN ('pending', 'running')
+            ORDER BY created_at DESC
+            LIMIT 1
+        """),
+        {"drug_name": drug_name},
+    )
+    row = result.mappings().first()
+    return dict(row) if row else None
+
+
+async def get_job_status(session: AsyncSession, drug_name: str) -> dict | None:
+    result = await session.execute(
+        text("""
+            SELECT drug_name, status, completed_at
+            FROM ingestion_jobs
+            WHERE drug_name = :drug_name
+            ORDER BY created_at DESC
+            LIMIT 1
+        """),
+        {"drug_name": drug_name},
+    )
+    row = result.mappings().first()
+    return dict(row) if row else None
 
 
 async def upsert_drugs_and_chunks(drug: dict) -> int:

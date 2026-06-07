@@ -73,6 +73,7 @@ class DrugResponse(BaseModel):
         default_factory=list,
         description="Safety caveats, missing-data notes, or pharmacist review reminders.",
     )
+    cache_miss: bool = False
 
 
 @dataclass(frozen=True)

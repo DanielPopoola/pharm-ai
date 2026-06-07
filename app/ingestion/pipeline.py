@@ -1,13 +1,15 @@
 import logging
 
 import httpx
+from sqlalchemy import text
 
 from app.core.config import settings
+from app.core.database import AsyncSessionLocal
 from app.ingestion import checkpoint
 from app.ingestion.chunker import is_clinically_useful, parse_label_into_chunks
 from app.ingestion.embedder import embed_chunks
-from app.ingestion.openfda_client import fetch_labels_for_class
-from app.ingestion.repository import upsert_drugs_and_chunks, verify_upsert
+from app.ingestion.openfda_client import fetch_label_for_drug, fetch_labels_for_class
+from app.ingestion.repository import complete_job, create_job, upsert_drugs_and_chunks, verify_upsert
 
 logger = logging.getLogger("pharmai")
 
@@ -147,3 +149,63 @@ async def stage_upsert() -> None:
         logger.info("All classes upserted successfully, checkpoints wiped")
     else:
         logger.warning("Some upserts failed, checkpoints preserved")
+
+
+async def stage_fetch_single(drug_name: str) -> None:
+    async with AsyncSessionLocal() as session:
+        await create_job(session, drug_name, triggered_by="cache_miss")
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        labels = await fetch_label_for_drug(drug_name, client)
+
+    if not labels:
+        raise ValueError(f"No label found on OpenFDA for: {drug_name}")
+
+    if not is_clinically_useful(labels[0]):
+        raise ValueError(f"Label for {drug_name} did not pass quality filter")
+
+    checkpoint.write_labels(drug_name, labels)
+    logger.info("Fetched and checkpointed single drug: %s", drug_name)
+
+
+async def stage_embed_single(drug_name: str) -> None:
+    labels = checkpoint.read_labels(drug_name)
+    chunks_with_labels = _extract_chunks(labels)
+
+    if not chunks_with_labels:
+        raise ValueError(f"No usable chunks for: {drug_name}")
+
+    texts = [chunk.chunk_text for _, chunk in chunks_with_labels]
+    embeddings = await embed_chunks(texts)
+
+    chunks_with_embeddings = [
+        (label, chunk, embedding) for (label, chunk), embedding in zip(chunks_with_labels, embeddings)
+    ]
+
+    checkpoint.write_embeddings(drug_name, chunks_with_embeddings)
+    logger.info("Embedded single drug: %s", drug_name)
+
+
+async def stage_upsert_single(drug_name: str) -> None:
+    drugs = checkpoint.read_embeddings(drug_name)
+
+    for drug in drugs:
+        rows = await upsert_drugs_and_chunks(drug)
+        if not verify_upsert(rows, drug):
+            raise ValueError(f"Upsert verification failed for: {drug_name}")
+        logger.info("Upserted: %s", drug["drug_name"])
+
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            text(
+                "SELECT id FROM ingestion_jobs \
+                WHERE drug_name = :drug_name AND status = 'running' LIMIT 1"
+            ),
+            {"drug_name": drug_name},
+        )
+        row = result.mappings().first()
+        if row:
+            await complete_job(session, row["id"])
+
+    checkpoint.wipe_checkpoints()
+    logger.info("Upsert complete, checkpoints wiped: %s", drug_name)
