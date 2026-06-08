@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.infrastructure.rxclass_client import EpcClass, ClassMember, RxClassClient
+from app.infrastructure.rxclass_client import RxClassClient
 
 # Maps each EPC classId to a list of therapeutically equivalent alternative classIds.
 # Sourced from FDA therapeutic equivalence guidelines.
