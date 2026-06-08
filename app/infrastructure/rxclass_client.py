@@ -37,7 +37,10 @@ class RxClassClient:
 
         if response.status_code == 404:
             return None
-
+        
+        if response.status_code in {500, 502, 503}:
+            raise RetryableAPIError(f"OpenFDA returned {response.status_code}")
+        
         response.raise_for_status()
 
         ids = (
@@ -68,6 +71,9 @@ class RxClassClient:
         if response.status_code == 404:
             return []
 
+        if response.status_code in {500, 502, 503}:
+            raise RetryableAPIError(f"OpenFDA returned {response.status_code}")
+        
         response.raise_for_status()
 
         classes = (
@@ -107,6 +113,9 @@ class RxClassClient:
         if response.status_code == 404:
             return []
 
+        if response.status_code in {500, 502, 503}:
+            raise RetryableAPIError(f"OpenFDA returned {response.status_code}")
+        
         response.raise_for_status()
 
         concepts = (
