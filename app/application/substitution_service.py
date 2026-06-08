@@ -35,8 +35,15 @@ class SubstitutionService:
                 ),
                 cache_miss=True,
             )
-        alternatives = await self._finder.find_alternatives(drug_name, patient_allergies)
 
+        alternatives = await self._finder.find_alternatives(drug_name, patient_allergies)
         safety_chunks = await self._screener.screen(alternatives, patient_allergies, patient_conditions)
 
-        return await self._llm(drug_name, alternatives, safety_chunks)
+        return await self._llm(
+            drug_name=drug_name,
+            drug_metadata=drug,
+            alternatives=alternatives,
+            safety_chunks=safety_chunks,
+            patient_allergies=patient_allergies,
+            patient_conditions=patient_conditions,
+        )
