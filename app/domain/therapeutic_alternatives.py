@@ -19,7 +19,6 @@ class TherapeuticAlternativeFinder:
         self._rxclass = rxclass
         self._repo = repo
 
-
     async def find_alternatives(
         self,
         drug_name: str,
@@ -52,7 +51,7 @@ class TherapeuticAlternativeFinder:
         for class_id in safe_class_ids:
             members = await self._rxclass.get_class_members(class_id)
             candidate_names.extend(m.drug_name for m in members)
-        
+
         if not candidate_names:
             return []
 

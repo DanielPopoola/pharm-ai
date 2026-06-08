@@ -17,11 +17,16 @@ async def test_returns_alternatives_for_drug_with_no_allergies(rxclass, repo):
     assert "azithromycin" in result
     assert "clarithromycin" in result
 
+
 @pytest.mark.anyio
 async def test_excludes_prescribed_class_when_patient_is_allergic(rxclass, repo):
     rxclass.get_epc_classes.side_effect = [
-        [EpcClass(class_id="N0000175503", class_name="Penicillin-class Antibacterial")],  # amoxicillin lookup
-        [EpcClass(class_id="N0000175503", class_name="Penicillin-class Antibacterial")],  # penicillin allergy lookup
+        [
+            EpcClass(class_id="N0000175503", class_name="Penicillin-class Antibacterial")
+        ],  # amoxicillin lookup
+        [
+            EpcClass(class_id="N0000175503", class_name="Penicillin-class Antibacterial")
+        ],  # penicillin allergy lookup
     ]
 
     with patch(
@@ -91,6 +96,4 @@ async def test_filters_to_only_db_cached_drugs(rxclass, repo):
         result = await finder.find_alternatives("amoxicillin", patient_allergies=[])
 
     assert result == ["azithromycin"]
-    repo.filter_to_cached.assert_called_once_with(
-        ["azithromycin", "clarithromycin", "telithromycin"]
-    )
+    repo.filter_to_cached.assert_called_once_with(["azithromycin", "clarithromycin", "telithromycin"])

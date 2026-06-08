@@ -10,8 +10,8 @@ from app.core.retry import retry_with_backoff
 class EpcClass:
     class_id: str
     class_name: str
- 
- 
+
+
 @dataclass(frozen=True)
 class ClassMember:
     rxcui: str
@@ -37,17 +37,13 @@ class RxClassClient:
 
         if response.status_code == 404:
             return None
-        
+
         if response.status_code in {500, 502, 503}:
             raise RetryableAPIError(f"OpenFDA returned {response.status_code}")
-        
+
         response.raise_for_status()
 
-        ids = (
-            response.json()
-            .get("idGroup", {})
-            .get("rxnormId", [])
-        )
+        ids = response.json().get("idGroup", {}).get("rxnormId", [])
 
         return ids[0] if ids else None
 
@@ -55,7 +51,7 @@ class RxClassClient:
         max_retries=3,
         initial_delay=1,
         retry_exceptions=(httpx.RequestError, RetryableAPIError),
-    )   
+    )
     async def get_epc_classes(
         self,
         rxcui: str,
@@ -73,14 +69,10 @@ class RxClassClient:
 
         if response.status_code in {500, 502, 503}:
             raise RetryableAPIError(f"OpenFDA returned {response.status_code}")
-        
+
         response.raise_for_status()
 
-        classes = (
-            response.json()
-            .get("rxclassDrugInfoList", {})
-            .get("rxclassDrugInfo", [])
-        )
+        classes = response.json().get("rxclassDrugInfoList", {}).get("rxclassDrugInfo", [])
 
         return [
             EpcClass(
@@ -115,14 +107,10 @@ class RxClassClient:
 
         if response.status_code in {500, 502, 503}:
             raise RetryableAPIError(f"OpenFDA returned {response.status_code}")
-        
+
         response.raise_for_status()
 
-        concepts = (
-            response.json()
-            .get("drugMemberGroup", {})
-            .get("drugMember", [])
-        )
+        concepts = response.json().get("drugMemberGroup", {}).get("drugMember", [])
 
         return [
             ClassMember(
