@@ -1,17 +1,36 @@
+from collections.abc import AsyncGenerator
+
+import httpx
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agent.agent import agent
-from app.agent.models import DrugResponse, PharmacistQuery, PharmAIDeps
+from app.agent.models import DrugResponse, PharmacistQuery
 from app.api.dependencies import build_degraded_response
+from app.application.substitution_service import SubstitutionService
 from app.core.database import get_session
 from app.core.logging import setup_logging
+from app.domain.patient_safety import PatientSafetyScreener
+from app.domain.therapeutic_alternatives import TherapeuticAlternativeFinder
+from app.infrastructure.drug_repository import PostgresDrugRepository
+from app.infrastructure.llm import gemini_llm
+from app.infrastructure.rxclass_client import RxClassClient
 from app.ingestion.repository import get_active_job, get_job_status
 from app.retrieval.retrieval import is_drug_cached
 from app.worker import celery_app
 
 setup_logging()
 app = FastAPI()
+
+
+async def get_substitution_service() -> AsyncGenerator[SubstitutionService, None]:
+    async with httpx.AsyncClient() as client:
+        repo = PostgresDrugRepository()
+        finder = TherapeuticAlternativeFinder(
+            rxclass=RxClassClient(client),
+            repo=repo,
+        )
+        screener = PatientSafetyScreener(repo=repo)
+        yield SubstitutionService(finder=finder, screener=screener, repo=repo, llm=gemini_llm)
 
 
 @app.get("/health")
@@ -23,6 +42,7 @@ async def health():
 async def query(
     body: PharmacistQuery,
     session: AsyncSession = Depends(get_session),
+    service: SubstitutionService = Depends(get_substitution_service),
 ) -> DrugResponse:
     cached = await is_drug_cached(body.drug_name)
 
@@ -35,16 +55,11 @@ async def query(
             )
         return await build_degraded_response(body.drug_name)
 
-    deps = PharmAIDeps(
+    return await service.run(
         drug_name=body.drug_name,
         patient_allergies=body.patient_allergies,
         patient_conditions=body.patient_conditions,
     )
-    result = await agent.run(
-        f"Review {body.drug_name} for this patient.",
-        deps=deps,
-    )
-    return result.output
 
 
 @app.get("/drugs/{drug_name}/ingestion-status")

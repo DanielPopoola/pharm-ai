@@ -19,8 +19,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "aiosqlite>=0.22.1",
+    "anyio>=4.13.0",
     "pre-commit>=4.6.0",
     "pytest>=9.0.3",
+    "pytest-asyncio>=1.4.0",
+    "pytest-httpx>=0.36.2",
     "ruff>=0.15.15",
 ]
 
@@ -37,3 +41,9 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]  # pycodestyle, pyflakes, isort
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+pythonpath = "."
